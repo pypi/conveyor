@@ -8,6 +8,7 @@
 .cache/
 .coverage
 .state
+.tox/
 
 docs/_build/
 build/

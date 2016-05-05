@@ -1,0 +1,10 @@
+[run]
+branch = True
+
+source =
+    conveyor
+
+omit =
+    # Tiny shim code that we don't actually need to test and trying to do so
+    # would just get in the way.
+    conveyor/app.py
