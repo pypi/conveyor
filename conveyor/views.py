@@ -32,8 +32,15 @@ async def redirect(request):
     )
 
     async with request.app["http.session"].get(json_url) as resp:
-        assert resp.status == 200  # TODO: Better Error Handling
+        if 400 <= resp.status < 500:
+            return web.Response(status=resp.status)
+        elif 500 <= resp.status < 600:
+            return web.Response(status=503)
 
+        # It shouldn't be possible to get a status code other than 200 here.
+        assert resp.status == 200
+
+        # Get the JSON data from our request.
         data = await resp.json()
 
     # Look at all of the files listed in the JSON response, and see if one
