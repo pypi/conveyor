@@ -1,0 +1,16 @@
+*.py[co]
+*.mo
+
+*.egg-info/
+*.egg
+.eggs/
+
+.cache/
+.coverage
+.state
+
+docs/_build/
+build/
+dist/*.tar.gz
+dist/*.whl
+htmlcov/
