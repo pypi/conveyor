@@ -26,6 +26,15 @@ async def redirect(request):
     if project_l != project_name[0]:
         return web.Response(status=404)
 
+    # If the filename we're looking for is a signature, then we'll need to turn
+    # this into the *real* filename and a note that we're looking for the
+    # signature.
+    if filename.endswith(".asc"):
+        filename = filename[:-4]
+        signature = True
+    else:
+        signature = False
+
     json_url = urllib.parse.urljoin(
         request.app["settings"]["endpoint"],
         "/pypi/{}/json".format(project_name),
@@ -49,7 +58,24 @@ async def redirect(request):
     for url in data.get("urls", []):
         if (url["filename"] == filename
                 and url["python_version"] == python_version):
-            return web.Response(status=302, headers={"Location": url["url"]})
+            # If we've found our filename, but we were actually looking for the
+            # *signature* of that file, then we need to check if it has a
+            # signature associated with it, and if so redirect to that, and if
+            # not return a 404.
+            if signature:
+                if url.get("has_sig"):
+                    return web.Response(
+                        status=302,
+                        headers={"Location": url["url"] + ".asc"},
+                    )
+                else:
+                    return web.Response(status=404)
+            # If we've found our filename, then we'll redirect to it.
+            else:
+                return web.Response(
+                    status=302,
+                    headers={"Location": url["url"]},
+                )
 
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
