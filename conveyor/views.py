@@ -55,27 +55,28 @@ async def redirect(request):
     # Look at all of the files listed in the JSON response, and see if one
     # matches our filename and Python version. If we find one, then return a
     # 302 redirect to that URL.
-    for url in data.get("urls", []):
-        if (url["filename"] == filename
-                and url["python_version"] == python_version):
-            # If we've found our filename, but we were actually looking for the
-            # *signature* of that file, then we need to check if it has a
-            # signature associated with it, and if so redirect to that, and if
-            # not return a 404.
-            if signature:
-                if url.get("has_sig"):
+    for release in data.get("releases", {}).values():
+        for file_ in release:
+            if (file_["filename"] == filename
+                    and file_["python_version"] == python_version):
+                # If we've found our filename, but we were actually looking for
+                # the *signature* of that file, then we need to check if it has
+                # a signature associated with it, and if so redirect to that,
+                # and if not return a 404.
+                if signature:
+                    if file_.get("has_sig"):
+                        return web.Response(
+                            status=302,
+                            headers={"Location": file_["url"] + ".asc"},
+                        )
+                    else:
+                        return web.Response(status=404)
+                # If we've found our filename, then we'll redirect to it.
+                else:
                     return web.Response(
                         status=302,
-                        headers={"Location": url["url"] + ".asc"},
+                        headers={"Location": file_["url"]},
                     )
-                else:
-                    return web.Response(status=404)
-            # If we've found our filename, then we'll redirect to it.
-            else:
-                return web.Response(
-                    status=302,
-                    headers={"Location": url["url"]},
-                )
 
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
