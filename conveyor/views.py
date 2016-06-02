@@ -67,7 +67,10 @@ async def redirect(request):
                     if file_.get("has_sig"):
                         return web.Response(
                             status=302,
-                            headers={"Location": file_["url"] + ".asc"},
+                            headers={
+                                "Location": file_["url"] + ".asc",
+                                "Cache-Control": "max-age=604800, public",
+                            },
                         )
                     else:
                         return web.Response(status=404)
@@ -75,7 +78,10 @@ async def redirect(request):
                 else:
                     return web.Response(
                         status=302,
-                        headers={"Location": file_["url"]},
+                        headers={
+                            "Location": file_["url"],
+                            "Cache-Control": "max-age=604800, public",
+                        },
                     )
 
     # If we've gotten to this point, it means that we couldn't locate an url
