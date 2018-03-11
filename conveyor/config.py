@@ -16,7 +16,7 @@ import os
 import aiohttp
 import aiohttp.web
 
-from .views import redirect
+from .views import redirect, health
 
 
 async def session_close(app):
@@ -49,6 +49,12 @@ def configure():
         "HEAD",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
+    )
+
+    app.router.add_route(
+        "GET",
+        "/_health/",
+        health,
     )
 
     return app

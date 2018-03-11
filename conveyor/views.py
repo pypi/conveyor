@@ -15,6 +15,10 @@ import urllib.parse
 from aiohttp import web
 
 
+async def health(request):
+    return web.Response(status=200)
+
+
 async def redirect(request):
     python_version = request.match_info["python_version"]
     project_l = request.match_info["project_l"]
