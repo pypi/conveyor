@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import asyncio
 import os
 
 import aiohttp
@@ -33,6 +34,7 @@ def configure():
     # Setup a HTTP session for our clients to share connections with and
     # register a shutdown callback to close the session.
     app["http.session"] = aiohttp.ClientSession(
+        loop=asyncio.get_event_loop(),
         headers={"User-Agent": "conveyor"},
     )
     app.on_shutdown.append(session_close)
