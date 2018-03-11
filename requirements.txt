@@ -4,8 +4,13 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
-
-aiohttp==0.21.6
-cchardet==1.0.0
-chardet==2.3.0            # via aiohttp
-gunicorn==19.4.5
+aiohttp==3.0.7
+async-timeout==2.0.0      # via aiohttp
+attrs==17.4.0             # via aiohttp
+cchardet==2.1.1
+chardet==3.0.4            # via aiohttp
+gunicorn==19.7.1
+idna-ssl==1.0.1           # via aiohttp
+idna==2.6                 # via idna-ssl, yarl
+multidict==4.1.0          # via aiohttp, yarl
+yarl==1.1.1               # via aiohttp
