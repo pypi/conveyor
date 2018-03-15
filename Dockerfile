@@ -11,7 +11,7 @@ RUN apk update && apk add g++
 
 COPY requirements.txt /tmp/requirements.txt
 
-RUN set -x     && pip --no-cache-dir --disable-pip-version-check install -r /tmp/requirements.txt
+RUN set -x && pip --no-cache-dir --disable-pip-version-check install -r /tmp/requirements.txt
 
 
 FROM python:alpine3.6
