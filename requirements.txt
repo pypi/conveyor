@@ -4,13 +4,22 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+aiobotocore==0.6.0
 aiohttp==3.0.7
 async-timeout==2.0.0      # via aiohttp
 attrs==17.4.0             # via aiohttp
+botocore==1.8.21          # via aiobotocore
 cchardet==2.1.1
 chardet==3.0.4            # via aiohttp
+docutils==0.14            # via botocore
 gunicorn==19.7.1
 idna-ssl==1.0.1           # via aiohttp
 idna==2.6                 # via idna-ssl, yarl
-multidict==4.1.0          # via aiohttp, yarl
+jmespath==0.9.3           # via botocore
+multidict==4.1.0          # via aiobotocore, aiohttp, yarl
+packaging==17.1           # via aiobotocore
+pyparsing==2.2.0          # via packaging
+python-dateutil==2.7.2    # via botocore
+six==1.11.0               # via packaging, python-dateutil
+wrapt==1.10.11            # via aiobotocore
 yarl==1.1.1               # via aiohttp
