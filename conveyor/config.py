@@ -19,6 +19,7 @@ import aiohttp.web
 from aiohttp.web_middlewares import normalize_path_middleware
 
 from .views import not_found, redirect, health, documentation
+from .tasks import redirects_refresh_task
 
 
 async def session_close(app):
@@ -28,6 +29,11 @@ async def session_close(app):
     boto_session = app.get("boto.session")
     if boto_session is not None:
         await boto_session.close()
+
+
+async def cancel_tasks(app):
+    for task in app["tasks"]:
+        await task.cancel()
 
 
 def configure():
@@ -49,6 +55,16 @@ def configure():
         loop=asyncio.get_event_loop(),
     )
     app.on_shutdown.append(session_close)
+
+    app["tasks"] = []
+
+    app["redirects"] = {}
+    _fetch_redirects_task = asyncio.ensure_future(
+        redirects_refresh_task(app),
+        loop=asyncio.get_event_loop(),
+    )
+
+    app.on_shutdown.append(cancel_tasks)
 
     # Add routes and views to our application
     app.router.add_route(
@@ -86,7 +102,17 @@ def configure():
     # Add Documentation routes
     app.router.add_route(
         "GET",
-        "/{path:.*}",
+        "/{project_name}/{path:.*}",
+        documentation,
+    )
+    app.router.add_route(
+        "GET",
+        "/{project_name}/",
+        documentation,
+    )
+    app.router.add_route(
+        "GET",
+        "/{project_name}",
         documentation,
     )
 

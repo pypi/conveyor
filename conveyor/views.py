@@ -112,9 +112,21 @@ async def fetch_key(s3, request, bucket, key):
 
 
 async def documentation(request):
-    path = request.match_info["path"]
-    if not path:
-        path = "/"
+    project_name = request.match_info["project_name"]
+    path = request.match_info.get("path", "")
+
+    if project_name in request.app["redirects"]:
+        location = request.app["redirects"][project_name]["base_uri"]
+        if request.app["redirects"][project_name]["include_path"]:
+            location = f"{location}/{path}"
+        return web.Response(
+            status=302,
+            headers={
+                "Location": location,
+            }
+        )
+
+    path = f"{project_name}/{path}"
     if path.endswith("/"):
         path += "index.html"
 
