@@ -111,6 +111,11 @@ async def fetch_key(s3, request, bucket, key):
     return resp
 
 
+async def documentation_top(request):
+    project_name = request.match_info["project_name"]
+    return web.HTTPMovedPermanently(location=f"/{project_name}/")
+
+
 async def documentation(request):
     project_name = request.match_info["project_name"]
     path = request.match_info.get("path", "")

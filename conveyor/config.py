@@ -18,7 +18,7 @@ import aiohttp
 import aiohttp.web
 from aiohttp.web_middlewares import normalize_path_middleware
 
-from .views import not_found, redirect, health, documentation
+from .views import not_found, redirect, health, documentation, documentation_top
 from .tasks import redirects_refresh_task
 
 
@@ -107,13 +107,8 @@ def configure():
     )
     app.router.add_route(
         "GET",
-        "/{project_name}/",
-        documentation,
-    )
-    app.router.add_route(
-        "GET",
         "/{project_name}",
-        documentation,
+        documentation_top,
     )
 
     return app
