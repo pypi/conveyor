@@ -1,3 +1,4 @@
+aiobotocore
 aiohttp
 cchardet
 gunicorn

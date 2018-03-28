@@ -22,8 +22,11 @@ async def test_session_close():
     async def close():
         pass
 
-    app = {"http.session": pretend.stub(close=close)}
+    app = {
+        "http.session": pretend.stub(close=close),
+        "boto.session": pretend.stub(close=close),
+    }
 
     await session_close(app)
 
-    assert close.calls == [pretend.call()]
+    assert close.calls == [pretend.call(), pretend.call()]

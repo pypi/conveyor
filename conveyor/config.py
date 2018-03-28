@@ -13,14 +13,27 @@
 import asyncio
 import os
 
+import aiobotocore
 import aiohttp
 import aiohttp.web
+from aiohttp.web_middlewares import normalize_path_middleware
 
-from .views import redirect, health
+from .views import not_found, redirect, health, documentation
+from .tasks import redirects_refresh_task
 
 
 async def session_close(app):
-    await app["http.session"].close()
+    http_session = app.get("http.session")
+    if http_session is not None:
+        await http_session.close()
+    boto_session = app.get("boto.session")
+    if boto_session is not None:
+        await boto_session.close()
+
+
+async def cancel_tasks(app):
+    for task in app["tasks"]:
+        await task.cancel()
 
 
 def configure():
@@ -29,6 +42,7 @@ def configure():
     # Pull configuration out of the environment
     app["settings"] = {
         "endpoint": os.environ["CONVEYOR_ENDPOINT"],
+        "docs_bucket": os.environ["DOCS_BUCKET"],
     }
 
     # Setup a HTTP session for our clients to share connections with and
@@ -37,7 +51,20 @@ def configure():
         loop=asyncio.get_event_loop(),
         headers={"User-Agent": "conveyor"},
     )
+    app["boto.session"] = aiobotocore.get_session(
+        loop=asyncio.get_event_loop(),
+    )
     app.on_shutdown.append(session_close)
+
+    app["tasks"] = []
+
+    app["redirects"] = {}
+    _fetch_redirects_task = asyncio.ensure_future(
+        redirects_refresh_task(app),
+        loop=asyncio.get_event_loop(),
+    )
+
+    app.on_shutdown.append(cancel_tasks)
 
     # Add routes and views to our application
     app.router.add_route(
@@ -50,11 +77,43 @@ def configure():
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
     )
+    app.router.add_route(
+        "GET",
+        "/packages/{tail:.*}",
+        not_found,
+    )
+    app.router.add_route(
+        "GET",
+        "/packages",
+        not_found,
+    )
 
     app.router.add_route(
         "GET",
         "/_health/",
         health,
+    )
+    app.router.add_route(
+        "GET",
+        "/_health",
+        health,
+    )
+
+    # Add Documentation routes
+    app.router.add_route(
+        "GET",
+        "/{project_name}/{path:.*}",
+        documentation,
+    )
+    app.router.add_route(
+        "GET",
+        "/{project_name}/",
+        documentation,
+    )
+    app.router.add_route(
+        "GET",
+        "/{project_name}",
+        documentation,
     )
 
     return app

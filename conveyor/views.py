@@ -10,13 +10,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mimetypes
+
 import urllib.parse
 
+import botocore
+
 from aiohttp import web
+
+ANON_CONFIG = botocore.client.Config(signature_version=botocore.UNSIGNED)
 
 
 async def health(request):
     return web.Response(status=200)
+
+
+async def not_found(request):
+    return web.Response(status=404)
 
 
 async def redirect(request):
@@ -91,3 +101,61 @@ async def redirect(request):
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
     return web.Response(status=404)
+
+
+async def fetch_key(s3, request, bucket, key):
+    resp = await s3.get_object(
+        Bucket=bucket,
+        Key=key,
+    )
+    return resp
+
+
+async def documentation(request):
+    project_name = request.match_info["project_name"]
+    path = request.match_info.get("path", "")
+
+    if project_name in request.app["redirects"]:
+        location = request.app["redirects"][project_name]["base_uri"]
+        if request.app["redirects"][project_name]["include_path"]:
+            location = f"{location}/{path}"
+        return web.Response(
+            status=302,
+            headers={
+                "Location": location,
+            }
+        )
+
+    path = f"{project_name}/{path}"
+    if path.endswith("/"):
+        path += "index.html"
+
+    bucket = request.app["settings"]["docs_bucket"]
+    session = request.app["boto.session"]
+
+    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+        try:
+            key = await fetch_key(s3, request, bucket, path)
+        except botocore.exceptions.ClientError:
+            try:
+                key = await fetch_key(s3, request, bucket, path + "/index.html")
+            except botocore.exceptions.ClientError:
+                return web.Response(status=404)
+            else:
+                return web.HTTPMovedPermanently(location="/" + path + "/")
+
+        content_type, content_encoding = mimetypes.guess_type(path)
+        response = web.StreamResponse(status=200, reason='OK')
+        response.content_type = content_type
+        response.content_encoding = content_encoding
+        body = key['Body']
+        await response.prepare(request)
+        while True:
+            data = await body.read(4096)
+            await response.write(data)
+            await response.drain()
+            if not data:
+                body.close()
+                break
+
+        return response
