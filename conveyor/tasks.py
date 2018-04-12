@@ -44,29 +44,6 @@ async def redirects_refresh_task(app):
                 raise
             except Exception as exc:
                 pass
-            await asyncio.sleep(3600)
+            await asyncio.sleep(600)
         except concurrent.futures.CancelledError:
             return
-    #sleep = fibo(max_value=10)
-    #while True:
-    #    try:
-    #        result = await token_renewal(url)
-    #        if result:
-    #            sleep_value = min(OPTIONS['token_renew_ttl'],
-    #                              result['auth']['lease_duration']/2)
-    #        else:
-    #            try:
-    #                sleep_value = next(sleep)
-    #            except StopIteration:
-    #                new_token = await retrieve_token(url, OPTIONS['role_name'])
-    #                if new_token is None:
-    #                    sleep = fibo(max_value=10)
-    #                    sleep_value = next(sleep)
-    #                else:
-    #                    clear_token()
-    #                    store_token(new_token['auth']['client_token'])
-    #                    sleep_value = 1
-    #        task_log.info('sleeping %s' % (sleep_value,))
-    #        await asyncio.sleep(sleep_value)
-    #    except concurrent.futures.CancelledError:
-    #        return
