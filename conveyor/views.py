@@ -111,6 +111,34 @@ async def fetch_key(s3, request, bucket, key):
     return resp
 
 
+async def index(request):
+    bucket = request.app["settings"]["docs_bucket"]
+    session = request.app["boto.session"]
+    path = "index.html"
+
+    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+        try:
+            key = await fetch_key(s3, request, bucket, path)
+        except botocore.exceptions.ClientError:
+            return web.Response(status=404)
+
+        content_type, content_encoding = mimetypes.guess_type(path)
+        response = web.StreamResponse(status=200, reason='OK')
+        response.content_type = content_type
+        response.content_encoding = content_encoding
+        body = key['Body']
+        await response.prepare(request)
+        while True:
+            data = await body.read(4096)
+            await response.write(data)
+            await response.drain()
+            if not data:
+                body.close()
+                break
+
+        return response
+
+
 async def documentation_top(request):
     project_name = request.match_info["project_name"]
     return web.HTTPMovedPermanently(location=f"/{project_name}/")
