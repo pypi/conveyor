@@ -1,6 +1,6 @@
 # conveyor
 
-This project translates the old URL scheme for packages into redirects.
+This project translates the old URL scheme for packages into redirects as well as serving user documentation.
 
 It's canonical data is pulled from the JSON documents that PyPI serves.
 
@@ -32,6 +32,7 @@ export DOCS_BUCKET=pypi-docs
 
 ## Deployment
 
-Conveyor has only one configuration, read from the environment:
+Conveyor reads configuration from the environment:
 
 - `CONVEYOR_ENDPOINT`: The host to query for JSON documents, `https://pypi.python.org`
+- `DOCS_BUCKET`: The S3 Bucket that hosts user documentation, `pypi-docs`
