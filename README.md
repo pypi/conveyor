@@ -1,6 +1,6 @@
 # conveyor
 
-This project translates the old URL scheme for packages into redirects as well as serving user documentation.
+This project translates the old URL scheme for packages into redirects and serves legacy user documentation.
 
 It's canonical data is pulled from the JSON documents that PyPI serves.
 
