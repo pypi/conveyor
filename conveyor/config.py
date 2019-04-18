@@ -67,27 +67,34 @@ def configure():
 
     app.on_shutdown.append(cancel_tasks)
 
+    # Allow cross-origin GETs by default
+    cors = aiohttp_cors.setup(app, defaults={
+            "*": aiohttp_cors.ResourceOptions(
+                allow_methods="GET",
+            )
+    })
+
     # Add routes and views to our application
-    app.router.add_route(
+    cors.add(app.router.add_route(
         "GET",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
-    )
+    ))
     app.router.add_route(
         "HEAD",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
     )
-    app.router.add_route(
+    cors.add(app.router.add_route(
         "GET",
         "/packages/{tail:.*}",
         not_found,
-    )
-    app.router.add_route(
+    ))
+    cors.add(app.router.add_route(
         "GET",
         "/packages",
         not_found,
-    )
+    ))
 
     app.router.add_route(
         "GET",
@@ -121,16 +128,5 @@ def configure():
         "/{project_name}",
         documentation_top,
     )
-
-    # Allow cross-origin GETs by default
-    cors = aiohttp_cors.setup(app, defaults={
-            "*": aiohttp_cors.ResourceOptions(
-                allow_methods="GET",
-            )
-    })
-
-    # Add the default CORS configuration to all routes
-    for route in list(app.router.routes()):
-        cors.add(route)
 
     return app
