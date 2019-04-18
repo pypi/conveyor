@@ -129,7 +129,7 @@ def configure():
             )
     })
 
-    # Configure CORS on all routes.
+    # Add the default CORS configuration to all routes
     for route in list(app.router.routes()):
         cors.add(route)
 
