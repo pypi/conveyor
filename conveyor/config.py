@@ -69,9 +69,9 @@ def configure():
 
     # Allow cross-origin GETs by default
     cors = aiohttp_cors.setup(app, defaults={
-            "*": aiohttp_cors.ResourceOptions(
-                allow_methods="GET",
-            )
+        "*": aiohttp_cors.ResourceOptions(
+            allow_methods=["GET"],
+        )
     })
 
     # Add routes and views to our application
