@@ -1,5 +1,4 @@
 aiobotocore
 aiohttp
-aiohttp_cors
 cchardet
 gunicorn

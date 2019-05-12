@@ -17,7 +17,6 @@ import aiobotocore
 import aiohttp
 import aiohttp.web
 from aiohttp.web_middlewares import normalize_path_middleware
-import aiohttp_cors
 
 from .views import not_found, redirect, health, documentation, documentation_top, index
 from .tasks import redirects_refresh_task
@@ -67,34 +66,27 @@ def configure():
 
     app.on_shutdown.append(cancel_tasks)
 
-    # Allow cross-origin GETs by default
-    cors = aiohttp_cors.setup(app, defaults={
-        "*": aiohttp_cors.ResourceOptions(
-            allow_methods=["GET"],
-        )
-    })
-
     # Add routes and views to our application
-    cors.add(app.router.add_route(
+    app.router.add_route(
         "GET",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
-    ))
+    )
     app.router.add_route(
         "HEAD",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
     )
-    cors.add(app.router.add_route(
+    app.router.add_route(
         "GET",
         "/packages/{tail:.*}",
         not_found,
-    ))
-    cors.add(app.router.add_route(
+    )
+    app.router.add_route(
         "GET",
         "/packages",
         not_found,
-    ))
+    )
 
     app.router.add_route(
         "GET",
