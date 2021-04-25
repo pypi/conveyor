@@ -37,4 +37,4 @@ Conveyor reads configuration from the environment:
 - `CONVEYOR_ENDPOINT`: The host to query for JSON documents, `https://pypi.python.org`
 - `DOCS_BUCKET`: The S3 Bucket that hosts user documentation, `pypi-docs`
 
-Currently conveyor for PyPI production and test deploys via cabotage
+Currently conveyor for PyPI production and test deploys via cabotage.
