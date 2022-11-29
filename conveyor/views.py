@@ -17,8 +17,9 @@ import urllib.parse
 import botocore
 
 from aiohttp import web
+from botocore.config import Config as BotoCoreConfig
 
-ANON_CONFIG = botocore.client.Config(signature_version=botocore.UNSIGNED)
+ANON_CONFIG = BotoCoreConfig(signature_version=botocore.UNSIGNED)
 
 
 async def health(request):
@@ -38,7 +39,7 @@ async def redirect(request):
     # If the letter bucket doesn't match the first letter of the project, then
     # there is no point to going any further since it will be a 404 regardless.
     if project_l != project_name[0]:
-        return web.Response(status=404)
+        return web.Response(status=404, headers={'Reason': 'Incorrect project bucket'})
 
     # If the filename we're looking for is a signature, then we'll need to turn
     # this into the *real* filename and a note that we're looking for the
@@ -87,7 +88,7 @@ async def redirect(request):
                             },
                         )
                     else:
-                        return web.Response(status=404)
+                        return web.Response(status=404, headers={'Reason': 'missing signature file'})
                 # If we've found our filename, then we'll redirect to it.
                 else:
                     return web.Response(
@@ -100,7 +101,7 @@ async def redirect(request):
 
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
-    return web.Response(status=404)
+    return web.Response(status=404, headers={'Reason': 'no file found'})
 
 
 async def fetch_key(s3, request, bucket, key):
