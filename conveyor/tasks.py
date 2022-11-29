@@ -5,7 +5,9 @@ import json
 
 import botocore
 
-ANON_CONFIG = botocore.client.Config(signature_version=botocore.UNSIGNED)
+from botocore.config import Config as BotoCoreConfig
+
+ANON_CONFIG = BotoCoreConfig(signature_version=botocore.UNSIGNED)
 
 
 async def fetch_key(s3, bucket, key):

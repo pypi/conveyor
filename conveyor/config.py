@@ -13,10 +13,10 @@
 import asyncio
 import os
 
-import aiobotocore
 import aiohttp
 import aiohttp.web
 from aiohttp.web_middlewares import normalize_path_middleware
+from aiobotocore.session import get_session as aiobotocore_get_session
 
 from .views import not_found, redirect, health, documentation, documentation_top, index
 from .tasks import redirects_refresh_task
@@ -51,9 +51,7 @@ def configure():
         loop=asyncio.get_event_loop(),
         headers={"User-Agent": "conveyor"},
     )
-    app["boto.session"] = aiobotocore.get_session(
-        loop=asyncio.get_event_loop(),
-    )
+    app["boto.session"] = aiobotocore_get_session()
     app.on_shutdown.append(session_close)
 
     app["tasks"] = []
