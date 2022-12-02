@@ -27,7 +27,7 @@ python3 -m venv .state/venv
 .state/venv/bin/pip install -r requirements.txt
 export CONVEYOR_ENDPOINT=https://pypi.python.org
 export DOCS_BUCKET=pypi-docs
-.state/venv/bin/gunicorn -k aiohttp.worker.GunicornWebWorker conveyor.app:application
+.state/venv/bin/gunicorn -b 127.0.0.1:8000 -k aiohttp.worker.GunicornWebWorker conveyor.app:application
 ```
 
 ## Deployment
