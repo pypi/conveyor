@@ -12,6 +12,7 @@
 
 import asyncio
 import os
+import threading
 
 import aiohttp
 import aiohttp.web
@@ -26,10 +27,7 @@ async def session_close(app):
     http_session = app.get("http.session")
     if http_session is not None:
         await http_session.close()
-    boto_session = app.get("boto.session")
-    if boto_session is not None:
-        await boto_session.close()
-
+    app.get("boto.session")().close()
 
 async def cancel_tasks(app):
     for task in app["tasks"]:
@@ -51,7 +49,15 @@ def configure():
         loop=asyncio.get_event_loop(),
         headers={"User-Agent": "conveyor"},
     )
-    app["boto.session"] = aiobotocore_get_session()
+
+    # https://github.com/boto/botocore/issues/2047#issuecomment-1251318969
+    _aio_session_cache = threading.local()
+    def _cached_aiobotocore_session():
+        if not hasattr(_aio_session_cache, "session"):
+            _aio_session_cache.session = aiobotocore_get_session()
+        return _aio_session_cache.session
+    app["boto.session"] = _cached_aiobotocore_session
+
     app.on_shutdown.append(session_close)
 
     app["tasks"] = []

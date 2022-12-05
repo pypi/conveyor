@@ -114,7 +114,7 @@ async def fetch_key(s3, request, bucket, key):
 
 async def index(request):
     bucket = request.app["settings"]["docs_bucket"]
-    session = request.app["boto.session"]
+    session = request.app["boto.session"]()
     path = "index.html"
 
     async with session.create_client('s3', config=ANON_CONFIG) as s3:
@@ -165,7 +165,7 @@ async def documentation(request):
         path += "index.html"
 
     bucket = request.app["settings"]["docs_bucket"]
-    session = request.app["boto.session"]
+    session = request.app["boto.session"]()
 
     async with session.create_client('s3', config=ANON_CONFIG) as s3:
         try:

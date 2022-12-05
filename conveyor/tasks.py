@@ -23,7 +23,7 @@ async def redirects_refresh_task(app):
         try:
             try:
                 bucket = app["settings"]["docs_bucket"]
-                session = app["boto.session"]
+                session = app["boto.session"]()
                 etag = app["redirects"].get('_ETag')
                 async with session.create_client('s3', config=ANON_CONFIG) as s3:
                     try:
