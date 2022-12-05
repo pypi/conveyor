@@ -24,7 +24,7 @@ async def test_session_close():
 
     app = {
         "http.session": pretend.stub(close=close),
-        "boto.session": pretend.stub(close=close),
+        "boto.session": lambda: pretend.stub(close=close),
     }
 
     await session_close(app)
