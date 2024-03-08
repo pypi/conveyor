@@ -39,7 +39,7 @@ async def redirect(request):
     # If the letter bucket doesn't match the first letter of the project, then
     # there is no point to going any further since it will be a 404 regardless.
     if project_l != project_name[0]:
-        return web.Response(status=404, headers={'Reason': 'Incorrect project bucket'})
+        return web.Response(status=404, headers={"Reason": "Incorrect project bucket"})
 
     # If the filename we're looking for is a signature, then we'll need to turn
     # this into the *real* filename and a note that we're looking for the
@@ -88,7 +88,9 @@ async def redirect(request):
                             },
                         )
                     else:
-                        return web.Response(status=404, headers={'Reason': 'missing signature file'})
+                        return web.Response(
+                            status=404, headers={"Reason": "missing signature file"}
+                        )
                 # If we've found our filename, then we'll redirect to it.
                 else:
                     return web.Response(
@@ -101,7 +103,7 @@ async def redirect(request):
 
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
-    return web.Response(status=404, headers={'Reason': 'no file found'})
+    return web.Response(status=404, headers={"Reason": "no file found"})
 
 
 async def fetch_key(s3, request, bucket, key):
@@ -117,17 +119,17 @@ async def index(request):
     session = request.app["boto.session"]()
     path = "index.html"
 
-    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+    async with session.create_client("s3", config=ANON_CONFIG) as s3:
         try:
             key = await fetch_key(s3, request, bucket, path)
         except botocore.exceptions.ClientError:
             return web.Response(status=404)
 
         content_type, content_encoding = mimetypes.guess_type(path)
-        response = web.StreamResponse(status=200, reason='OK')
+        response = web.StreamResponse(status=200, reason="OK")
         response.content_type = content_type
         response.content_encoding = content_encoding
-        body = key['Body']
+        body = key["Body"]
         await response.prepare(request)
         while True:
             data = await body.read(4096)
@@ -157,7 +159,7 @@ async def documentation(request):
             status=302,
             headers={
                 "Location": location,
-            }
+            },
         )
 
     path = f"{project_name}/{path}"
@@ -167,7 +169,7 @@ async def documentation(request):
     bucket = request.app["settings"]["docs_bucket"]
     session = request.app["boto.session"]()
 
-    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+    async with session.create_client("s3", config=ANON_CONFIG) as s3:
         try:
             key = await fetch_key(s3, request, bucket, path)
         except botocore.exceptions.ClientError:
@@ -179,10 +181,10 @@ async def documentation(request):
                 return web.HTTPMovedPermanently(location="/" + path + "/")
 
         content_type, content_encoding = mimetypes.guess_type(path)
-        response = web.StreamResponse(status=200, reason='OK')
+        response = web.StreamResponse(status=200, reason="OK")
         response.content_type = content_type
         response.content_encoding = content_encoding
-        body = key['Body']
+        body = key["Body"]
         await response.prepare(request)
         while True:
             data = await body.read(4096)
