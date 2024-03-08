@@ -18,6 +18,8 @@ import botocore
 
 from aiohttp import web
 from botocore.config import Config as BotoCoreConfig
+from packaging.utils import parse_sdist_filename, parse_wheel_filename
+from packaging.utils import canonicalize_name, canonicalize_version
 
 ANON_CONFIG = BotoCoreConfig(signature_version=botocore.UNSIGNED)
 
@@ -30,6 +32,48 @@ async def not_found(request):
     return web.Response(status=404)
 
 
+async def _normalize_filename(filename):
+    if filename.endswith(".whl"):
+        name, ver, build, tags = parse_wheel_filename(filename)
+        return (
+            "-".join(
+                [
+                    canonicalize_name(name),
+                    canonicalize_version(ver),
+                ]
+                + (["".join(str(x) for x in build)] if build else [])
+                + [
+                    "-".join(str(x) for x in tags),
+                ]
+            )
+            + ".whl"
+        )
+    elif filename.endswith(".tar.gz"):
+        name, ver = parse_sdist_filename(filename)
+        return (
+            "-".join(
+                [
+                    canonicalize_name(name),
+                    canonicalize_version(ver),
+                ]
+            )
+            + ".tar.gz"
+        )
+    elif filename.endswith(".zip"):
+        name, ver = parse_sdist_filename(filename)
+        return (
+            "-".join(
+                [
+                    canonicalize_name(name),
+                    canonicalize_version(ver),
+                ]
+            )
+            + ".zip"
+        )
+    else:
+        return filename
+
+
 async def redirect(request):
     python_version = request.match_info["python_version"]
     project_l = request.match_info["project_l"]
@@ -38,8 +82,10 @@ async def redirect(request):
 
     # If the letter bucket doesn't match the first letter of the project, then
     # there is no point to going any further since it will be a 404 regardless.
-    if project_l != project_name[0]:
-        return web.Response(status=404, headers={'Reason': 'Incorrect project bucket'})
+    # Allow specifiying the exact first character of the actual filename (which
+    # might not be lowercase, to maintain backwards compatibility
+    if project_l != project_name[0].lower() and project_l != project_name[0]:
+        return web.Response(status=404, headers={"Reason": "Incorrect project bucket"})
 
     # If the filename we're looking for is a signature, then we'll need to turn
     # this into the *real* filename and a note that we're looking for the
@@ -72,8 +118,13 @@ async def redirect(request):
     # 302 redirect to that URL.
     for release in data.get("releases", {}).values():
         for file_ in release:
-            if (file_["filename"] == filename
-                    and file_["python_version"] == python_version):
+            if (
+                # Prefer that the normalized filename has been specified
+                _normalize_filename(file_["filename"]) == filename
+                # But also allow specifying the exact filename, to maintain
+                # backwards compatiblity
+                or file_["filename"] == filename
+            ) and file_["python_version"] == python_version:
                 # If we've found our filename, but we were actually looking for
                 # the *signature* of that file, then we need to check if it has
                 # a signature associated with it, and if so redirect to that,
@@ -88,7 +139,9 @@ async def redirect(request):
                             },
                         )
                     else:
-                        return web.Response(status=404, headers={'Reason': 'missing signature file'})
+                        return web.Response(
+                            status=404, headers={"Reason": "missing signature file"}
+                        )
                 # If we've found our filename, then we'll redirect to it.
                 else:
                     return web.Response(
@@ -101,7 +154,7 @@ async def redirect(request):
 
     # If we've gotten to this point, it means that we couldn't locate an url
     # to redirect to so we'll jsut 404.
-    return web.Response(status=404, headers={'Reason': 'no file found'})
+    return web.Response(status=404, headers={"Reason": "no file found"})
 
 
 async def fetch_key(s3, request, bucket, key):
@@ -117,17 +170,17 @@ async def index(request):
     session = request.app["boto.session"]()
     path = "index.html"
 
-    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+    async with session.create_client("s3", config=ANON_CONFIG) as s3:
         try:
             key = await fetch_key(s3, request, bucket, path)
         except botocore.exceptions.ClientError:
             return web.Response(status=404)
 
         content_type, content_encoding = mimetypes.guess_type(path)
-        response = web.StreamResponse(status=200, reason='OK')
+        response = web.StreamResponse(status=200, reason="OK")
         response.content_type = content_type
         response.content_encoding = content_encoding
-        body = key['Body']
+        body = key["Body"]
         await response.prepare(request)
         while True:
             data = await body.read(4096)
@@ -157,7 +210,7 @@ async def documentation(request):
             status=302,
             headers={
                 "Location": location,
-            }
+            },
         )
 
     path = f"{project_name}/{path}"
@@ -167,7 +220,7 @@ async def documentation(request):
     bucket = request.app["settings"]["docs_bucket"]
     session = request.app["boto.session"]()
 
-    async with session.create_client('s3', config=ANON_CONFIG) as s3:
+    async with session.create_client("s3", config=ANON_CONFIG) as s3:
         try:
             key = await fetch_key(s3, request, bucket, path)
         except botocore.exceptions.ClientError:
@@ -179,10 +232,10 @@ async def documentation(request):
                 return web.HTTPMovedPermanently(location="/" + path + "/")
 
         content_type, content_encoding = mimetypes.guess_type(path)
-        response = web.StreamResponse(status=200, reason='OK')
+        response = web.StreamResponse(status=200, reason="OK")
         response.content_type = content_type
         response.content_encoding = content_encoding
-        body = key['Body']
+        body = key["Body"]
         await response.prepare(request)
         while True:
             data = await body.read(4096)

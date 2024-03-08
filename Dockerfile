@@ -1,4 +1,4 @@
-FROM python:3.11.0-slim-buster as build
+FROM python:3.11.8-slim-buster as build
 
 RUN set -x \
     && python3 -m venv /opt/conveyor
@@ -17,7 +17,7 @@ COPY requirements.txt /tmp/requirements.txt
 RUN set -x && pip --no-cache-dir --disable-pip-version-check install -r /tmp/requirements.txt
 
 
-FROM python:3.11.0-slim-buster
+FROM python:3.11.8-slim-buster
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /opt/conveyor/src/
