@@ -1,4 +1,4 @@
-FROM python:3.11.8-slim-buster as build
+FROM python:3.11.8-slim-bullseye as build
 
 RUN set -x \
     && python3 -m venv /opt/conveyor
@@ -7,19 +7,25 @@ ENV PATH="/opt/conveyor/bin:${PATH}"
 
 RUN pip --no-cache-dir --disable-pip-version-check install --upgrade pip setuptools wheel
 
-RUN set -x \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    set -x \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
     build-essential
 
 COPY requirements.txt /tmp/requirements.txt
 
-RUN set -x && pip --no-cache-dir --disable-pip-version-check install -r /tmp/requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    set -x \
+    pip --no-cache-dir --disable-pip-version-check \
+    install -r /tmp/requirements.txt
 
 
-FROM python:3.11.8-slim-buster
+FROM python:3.11.8-slim-bullseye
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONPATH /opt/conveyor/src/
 ENV PATH="/opt/conveyor/bin:${PATH}"
 
