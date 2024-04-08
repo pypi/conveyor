@@ -18,7 +18,7 @@ COPY requirements.txt /tmp/requirements.txt
 
 RUN --mount=type=cache,target=/root/.cache/pip \
     set -x \
-    pip --no-cache-dir --disable-pip-version-check \
+    && pip --no-cache-dir --disable-pip-version-check \
     install -r /tmp/requirements.txt
 
 
