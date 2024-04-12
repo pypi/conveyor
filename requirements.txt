@@ -24,7 +24,7 @@ frozenlist==1.4.1
     #   aiosignal
 gunicorn==21.2.0
     # via -r requirements.in
-idna==3.6
+idna==3.7
     # via yarl
 jmespath==1.0.1
     # via botocore
