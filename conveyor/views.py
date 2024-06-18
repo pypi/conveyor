@@ -74,6 +74,51 @@ async def _normalize_filename(filename):
         return filename
 
 
+async def content_by_hash(request, digest=None, file_digest=None):
+    project_name = request.match_info["project_name"]
+    json_url = urllib.parse.urljoin(
+        request.app["settings"]["endpoint"],
+        "/pypi/{}/json".format(project_name),
+    )
+
+    async with request.app["http.session"].get(json_url) as resp:
+        if 400 <= resp.status < 500:
+            return web.Response(status=resp.status)
+        elif 500 <= resp.status < 600:
+            return web.Response(status=503)
+
+        # It shouldn't be possible to get a status code other than 200 here.
+        assert resp.status == 200
+
+        # Get the JSON data from our request.
+        data = await resp.json()
+
+    # Look at all of the files listed in the JSON response, and see if one
+    # matches our filename and Python version. If we find one, then return a
+    # 302 redirect to that URL.
+    for release in data.get("releases", {}).values():
+        for file_ in release:
+            if file_['digests'][digest] == file_digest:
+                return web.Response(
+                    status=302,
+                    headers={
+                        "Location": file_["url"],
+                        "Cache-Control": "max-age=604800, public",
+                    },
+                )
+
+    # If we've gotten to this point, it means that we couldn't locate an url
+    # to redirect to so we'll jsut 404.
+    return web.Response(status=404, headers={"Reason": "no file found"})
+
+
+async def content_sha256(request):
+    return await content_by_hash(request, digest="sha256", file_digest=request.match_info["file_sha256"])
+
+async def content_blake2b_256(request):
+    return await content_by_hash(request, digest="blake2b_256", file_digest=request.match_info["file_blake2b_256"])
+
+
 async def redirect(request):
     python_version = request.match_info["python_version"]
     project_l = request.match_info["project_l"]
