@@ -1,4 +1,4 @@
-FROM python:3.11.8-slim-bullseye as build
+FROM python:3.12.4-slim-bookworm as build
 
 RUN set -x \
     && python3 -m venv /opt/conveyor
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     install -r /tmp/requirements.txt
 
 
-FROM python:3.11.8-slim-bullseye
+FROM python:3.12.4-slim-bookworm
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
