@@ -19,7 +19,7 @@ import aiohttp.web
 from aiohttp.web_middlewares import normalize_path_middleware
 from aiobotocore.session import get_session as aiobotocore_get_session
 
-from .views import not_found, redirect, health, documentation, documentation_top, index
+from .views import not_found, redirect, health, documentation, documentation_top, index, content_sha256, content_blake2b_256
 from .tasks import redirects_refresh_task
 
 
@@ -80,6 +80,26 @@ def configure():
         "HEAD",
         "/packages/{python_version}/{project_l}/{project_name}/{filename}",
         redirect,
+    )
+    app.router.add_route(
+        "GET",
+        "/digest/{project_name}/sha256:{file_sha256}",
+        content_sha256,
+    )
+    app.router.add_route(
+        "HEAD",
+        "/digest/{project_name}/sha256:{file_sha256}",
+        content_sha256,
+    )
+    app.router.add_route(
+        "GET",
+        "/digest/{project_name}/blake2b_256:{file_blake2b_256}",
+        content_blake2b_256,
+    )
+    app.router.add_route(
+        "HEAD",
+        "/digest/{project_name}/blake2b_256:{file_blake2b_256}",
+        content_blake2b_256,
     )
     app.router.add_route(
         "GET",
