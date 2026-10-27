@@ -8,7 +8,7 @@ aiobotocore==2.13.0
     # via -r requirements.in
 aiohappyeyeballs==2.6.1
     # via aiohttp
-aiohttp==3.14.3
+aiohttp==3.14.4
     # via
     #   -r requirements.in
     #   aiobotocore
@@ -54,5 +54,5 @@ urllib3==2.8.0
     # via botocore
 wrapt==1.16.0
     # via aiobotocore
-yarl==1.23.0
+yarl==1.25.1
     # via aiohttp
